@@ -9,11 +9,11 @@ using Newtonsoft.Json;
 
 namespace HunterWebServices.EmailService
 {
-    public static class QueueEmail
+    public class QueueEmail
     {
         [FunctionName("QueueEmail")]
         [return: ServiceBus(Constants.PendingEmailsQueue, Connection = Constants.HunterWebAppsServiceBus)]
-        public static async Task<MessageDetails> Run(
+        public async Task<MessageDetails> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "SendEmail")] HttpRequest request)
         {
             var body = await request.ReadAsStringAsync();
@@ -22,7 +22,7 @@ namespace HunterWebServices.EmailService
 
             if (!IsValidEmail(details.Email))
             {
-                throw new ArgumentException("The provided email is invalid", nameof(details.Email));
+                throw new ArgumentException("The provided email is invalid", nameof(request));
             }
 
             return details;

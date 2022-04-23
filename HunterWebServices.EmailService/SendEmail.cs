@@ -8,21 +8,27 @@ using System.Net;
 
 namespace HunterWebServices.EmailService
 {
-    public static class SendEmail
+    public class SendEmail
     {
+        private readonly string sendgridApiKey;
+
+        public SendEmail(IConfiguration configuration)
+        {
+            this.sendgridApiKey = configuration["SENDGRID-API-KEY"];
+        }
+
         [FunctionName(nameof(SendEmail))]
-        public static async Task Run(
+        public async Task Run(
             [ServiceBusTrigger(
                 queueName: Constants.PendingEmailsQueue,
                 Connection = Constants.HunterWebAppsServiceBus)] MessageDetails details,
-            ILogger log,
-            IConfiguration configuration)
+            ILogger log)
         {
-            log.LogInformation("Running Email Service...");
+            log.LogInformation("Sending an email to {0}.", details.Email);
 
             var smtp = new SmtpClient("smtp.sendgrid.net", 465)
             {
-                Credentials = new NetworkCredential("apikey", configuration["SENDGRID-API-KEY"]),
+                Credentials = new NetworkCredential("apikey", this.sendgridApiKey),
             };
 
             var from = new MailAddress("hunter@hunterwebapps.com", "Hunter Web Apps");
@@ -43,7 +49,7 @@ namespace HunterWebServices.EmailService
 
             await smtp.SendMailAsync(mail);
 
-            log.LogInformation("Email Service Done.");
+            log.LogInformation("Email sent.");
         }
     }
 }
