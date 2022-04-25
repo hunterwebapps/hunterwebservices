@@ -5,6 +5,7 @@ using HunterWebServices.EmailService.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace HunterWebServices.EmailService
@@ -14,14 +15,19 @@ namespace HunterWebServices.EmailService
         [FunctionName("QueueEmail")]
         [return: ServiceBus(Constants.PendingEmailsQueue, Connection = Constants.HunterWebAppsServiceBus)]
         public async Task<MessageDetails> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "SendEmail")] HttpRequest request)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "SendEmail")] HttpRequest request,
+            ILogger log)
         {
             var body = await request.ReadAsStringAsync();
 
             var details = JsonConvert.DeserializeObject<MessageDetails>(body);
 
+            log.LogInformation("Queueing an email to {0}", details.Email);
+
             if (!IsValidEmail(details.Email))
             {
+                log.LogWarning("The provided email is invalid: {0}.", details.Email);
+
                 throw new ArgumentException("The provided email is invalid", nameof(request));
             }
 

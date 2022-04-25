@@ -3,13 +3,15 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using HunterWebServices.EmailService.Models;
-using System.Net.Mail;
-using System.Net;
+using System;
+using SendGrid;
+using SendGrid.Helpers.Mail;
 
 namespace HunterWebServices.EmailService
 {
     public class SendEmail
     {
+        private const string adminEmail = "hunter@hunterwebapps.com";
         private readonly string sendgridApiKey;
 
         public SendEmail(IConfiguration configuration)
@@ -26,30 +28,35 @@ namespace HunterWebServices.EmailService
         {
             log.LogInformation("Sending an email to {0}.", details.Email);
 
-            var smtp = new SmtpClient("smtp.sendgrid.net", 465)
-            {
-                Credentials = new NetworkCredential("apikey", this.sendgridApiKey),
-            };
+            var client = new SendGridClient(this.sendgridApiKey);
 
-            var from = new MailAddress("hunter@hunterwebapps.com", "Hunter Web Apps");
-            var bcc = new MailAddress("dwaynewhunter@gmail.com", "Dwayne Hunter");
-            var to = new MailAddress(details.Email, details.Name);
+            var from = new EmailAddress(adminEmail, "Hunter Web Apps");
+            var to = new EmailAddress(details.Email, details.Name);
 
-            var mail = new MailMessage(from, to)
-            {
-                IsBodyHtml = true,
-                Subject = "I'll be in touch",
-                Body = $@"Hi {details.Name},<br><br>
+            var subject = "I'll be in touch";
+            var htmlBody = $@"Hi {details.Name},<br><br>
                 I'm excited to hear from you. I'll get back to you within the next 12 hours.<br><br>
                 This is my direct email if you have any additional questions.<br><br>
                 Original Message:<br>
-                {details.Message}",
-                Bcc = { bcc },
-            };
+                {details.Message}";
+            var plainBody = $@"Hi {details.Name}. I'm excited to hear from you. I'll get back to you within the next 12 hours. This is my direct email if you have any additional questions. Original Message: {details.Message}";
 
-            await smtp.SendMailAsync(mail);
+            var mail = MailHelper.CreateSingleEmail(from, to, subject, plainBody, htmlBody);
 
-            log.LogInformation("Email sent.");
+            mail.AddBcc(from);
+
+            Response response;
+            try
+            {
+                response = await client.SendEmailAsync(mail);
+            }
+            catch (Exception ex)
+            {
+                log.LogError(ex, "SendMailAsync Failed");
+                return;
+            }
+
+            log.LogInformation("Email sent. Status Code: {0}", response.StatusCode);
         }
     }
 }

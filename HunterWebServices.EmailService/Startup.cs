@@ -1,7 +1,6 @@
 ﻿using Azure.Identity;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 
 [assembly: FunctionsStartup(typeof(HunterWebServices.EmailService.Startup))]
@@ -10,11 +9,8 @@ namespace HunterWebServices.EmailService
 {
     public class Startup : FunctionsStartup
     {
-        private IConfiguration configuration;
-
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            //builder.Services.AddSingleton(this.configuration);
         }
 
         public override void ConfigureAppConfiguration(IFunctionsConfigurationBuilder builder)
@@ -28,8 +24,6 @@ namespace HunterWebServices.EmailService
             configBuilder.AddAzureKeyVault(azureKeyVaultUrl, new DefaultAzureCredential());
 
             base.ConfigureAppConfiguration(builder);
-
-            this.configuration = configBuilder.Build();
         }
     }
 }
