@@ -24,6 +24,13 @@ namespace HunterWebServices.EmailService
 
             log.LogInformation("Queueing an email to {0}", details.Email);
 
+            if (!details.IsSourceDomainValid(request))
+            {
+                log.LogError("Received invalid request URL for EmailType: {0}.", details.Type);
+
+                throw new UnauthorizedAccessException("EmailType does not pass CORS restriction.");
+            }
+
             if (!IsValidEmail(details.Email))
             {
                 log.LogWarning("The provided email is invalid: {0}.", details.Email);
