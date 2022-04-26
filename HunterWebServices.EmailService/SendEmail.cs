@@ -6,12 +6,14 @@ using HunterWebServices.EmailService.Models;
 using System;
 using SendGrid;
 using SendGrid.Helpers.Mail;
+using HunterWebServices.EmailService.EmailTemplates;
 
 namespace HunterWebServices.EmailService
 {
     public class SendEmail
     {
         private const string adminEmail = "hunter@hunterwebapps.com";
+
         private readonly string sendgridApiKey;
 
         public SendEmail(IConfiguration configuration)
@@ -34,12 +36,11 @@ namespace HunterWebServices.EmailService
             var to = new EmailAddress(details.Email, details.Name);
 
             var subject = "I'll be in touch";
-            var htmlBody = $@"Hi {details.Name},<br><br>
-                I'm excited to hear from you. I'll get back to you within the next 12 hours.<br><br>
-                This is my direct email if you have any additional questions.<br><br>
-                Original Message:<br>
-                {details.Message}";
-            var plainBody = $@"Hi {details.Name}. I'm excited to hear from you. I'll get back to you within the next 12 hours. This is my direct email if you have any additional questions. Original Message: {details.Message}";
+            var (htmlBody, plainBody) = details.Type switch
+            {
+                EmailType.PortfolioContact => MakePortfolioContactMessage(details),
+                _ => throw new ArgumentException("Unhandled EmailType", nameof(details.Type)),
+            };
 
             var mail = MailHelper.CreateSingleEmail(from, to, subject, plainBody, htmlBody);
 
@@ -58,5 +59,15 @@ namespace HunterWebServices.EmailService
 
             log.LogInformation("Email sent. Status Code: {0}", response.StatusCode);
         }
+
+        private (string html, string plain) MakePortfolioContactMessage(MessageDetails details) =>
+            (
+                $@"Hey {details.Name},<br><br>
+                This is Dwayne Hunter. I'm excited to hear from you. Someone will get back to you, probably myself, within 2-4 hours (on business days).<br><br>
+                This is my direct email if you have any additional questions.<br><br>
+                Original Message:<br>
+                {details.Message}",
+                $@"Hi {details.Name}. This is Dwayne Hunter. I'm excited to hear from you. Someone will get back to you, probably myself, within 2-4 hours (on business days). This is my direct email if you have any additional questions. Original Message: {details.Message}"
+            );
     }
 }
