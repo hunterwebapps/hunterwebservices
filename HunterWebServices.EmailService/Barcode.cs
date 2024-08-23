@@ -10,7 +10,8 @@ public class Barcode
 {
     [FunctionName("Barcode")]
     public IActionResult Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route = "Barcode")] HttpRequest request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route = "Barcode")]
+        HttpRequest request,
         ILogger log)
     {
         log.LogInformation("C# HTTP trigger function processed a request.");
