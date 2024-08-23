@@ -4,6 +4,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using IronBarCode;
+using System.Linq;
 
 namespace HunterWebServices.EmailService;
 
@@ -15,8 +16,14 @@ public class Barcode
         HttpRequest request,
         ILogger log)
     {
-        var bolNumber = request.Query["bolNumber"];
-        var barcode = BarcodeWriter.CreateBarcode(bolNumber, BarcodeWriterEncoding.Code128);
+        var barcodeValue = request.Query["value"].FirstOrDefault();
+
+        if (string.IsNullOrWhiteSpace(barcodeValue) || barcodeValue.Length > 48)
+        {
+            return new BadRequestObjectResult("Please provide a barcode value with max 48 characters.");
+        }
+
+        var barcode = BarcodeWriter.CreateBarcode(barcodeValue, BarcodeWriterEncoding.Code128);
         return new FileContentResult(barcode.ToPngBinaryData(), "image/png");
     }
 }
