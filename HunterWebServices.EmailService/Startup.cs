@@ -1,6 +1,8 @@
-﻿using Azure.Identity;
+using Azure.Identity;
+using HunterWebServices.EmailService.Services;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 
 [assembly: FunctionsStartup(typeof(HunterWebServices.EmailService.Startup))]
@@ -11,6 +13,7 @@ namespace HunterWebServices.EmailService
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
+            builder.Services.AddSingleton<IEmailTemplateService, EmailTemplateService>();
         }
 
         public override void ConfigureAppConfiguration(IFunctionsConfigurationBuilder builder)

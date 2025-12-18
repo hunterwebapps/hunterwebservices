@@ -1,6 +1,7 @@
-﻿namespace HunterWebServices.EmailService.EmailTemplates;
+namespace HunterWebServices.EmailService.Models;
 
 public enum EmailType
 {
     PortfolioContact,
+    ScorecardSubmission,
 }

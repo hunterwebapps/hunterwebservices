@@ -1,24 +1,26 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using HunterWebServices.EmailService.Models;
-using System;
+using HunterWebServices.EmailService.Services;
 using SendGrid;
 using SendGrid.Helpers.Mail;
-using HunterWebServices.EmailService.EmailTemplates;
 
 namespace HunterWebServices.EmailService
 {
     public class SendEmail
     {
-        private const string adminEmail = "hunter@hunterwebapps.com";
+        private const string AdminEmail = "hunter@hunterwebapps.com";
 
         private readonly string sendgridApiKey;
+        private readonly IEmailTemplateService emailTemplateService;
 
-        public SendEmail(IConfiguration configuration)
+        public SendEmail(IConfiguration configuration, IEmailTemplateService emailTemplateService)
         {
             this.sendgridApiKey = configuration["SENDGRID-API-KEY"];
+            this.emailTemplateService = emailTemplateService;
         }
 
         [FunctionName(nameof(SendEmail))]
@@ -32,19 +34,28 @@ namespace HunterWebServices.EmailService
 
             var client = new SendGridClient(this.sendgridApiKey);
 
-            var from = new EmailAddress(adminEmail, "Hunter Web Apps");
+            var from = new EmailAddress(AdminEmail, "Hunter Web Apps");
             var to = new EmailAddress(details.Email, details.Name);
 
-            var subject = "I'll be in touch";
-            var (htmlBody, plainBody) = details.Type switch
+            var emailContent = emailTemplateService.CreateEmail(details);
+
+            SendGridMessage mail;
+            if (emailContent.SendToAdmin)
             {
-                EmailType.PortfolioContact => MakePortfolioContactMessage(details),
-                _ => throw new ArgumentException("Unhandled EmailType", nameof(details.Type)),
-            };
+                // Send to admin as primary recipient
+                mail = MailHelper.CreateSingleEmail(from, from, emailContent.Subject, emailContent.PlainBody, emailContent.HtmlBody);
 
-            var mail = MailHelper.CreateSingleEmail(from, to, subject, plainBody, htmlBody);
-
-            mail.AddBcc(from);
+                if (emailContent.CcClient)
+                {
+                    mail.AddCc(to);
+                }
+            }
+            else
+            {
+                // Send to client as primary recipient
+                mail = MailHelper.CreateSingleEmail(from, to, emailContent.Subject, emailContent.PlainBody, emailContent.HtmlBody);
+                mail.AddBcc(from);
+            }
 
             Response response;
             try
@@ -59,15 +70,5 @@ namespace HunterWebServices.EmailService
 
             log.LogInformation("Email sent. Status Code: {0}", response.StatusCode);
         }
-
-        private (string html, string plain) MakePortfolioContactMessage(MessageDetails details) =>
-            (
-                $@"Hey {details.Name},<br><br>
-                This is Dwayne Hunter. I'm excited to hear from you. Someone will get back to you, probably myself, within 2-4 hours (on business days).<br><br>
-                This is my direct email if you have any additional questions.<br><br>
-                Original Message:<br>
-                {details.Message}",
-                $@"Hi {details.Name}. This is Dwayne Hunter. I'm excited to hear from you. Someone will get back to you, probably myself, within 2-4 hours (on business days). This is my direct email if you have any additional questions. Original Message: {details.Message}"
-            );
     }
 }
