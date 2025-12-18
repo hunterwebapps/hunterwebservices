@@ -166,7 +166,6 @@ Original Message:<br>
         <div style=""background: #f8f9fa; padding: 20px 32px; border-bottom: 1px solid #e9ecef;"">
             <h2 style=""margin: 0 0 12px 0; color: #1a3a5c; font-size: 20px;"">{details.Company ?? "Company Not Provided"}</h2>
             <p style=""margin: 0; color: #666;"">
-                <strong>Completed by:</strong> {details.Name}<br>
                 <strong>Email:</strong> {details.Email}<br>
                 {phoneHtml}
             </p>
@@ -174,7 +173,11 @@ Original Message:<br>
 
         <!-- Overall Score -->
         <div style=""text-align: center; padding: 32px;"">
-            <div style=""display: inline-block; width: 120px; height: 120px; border-radius: 50%; background: {maturityColor}; color: white; line-height: 120px; font-size: 48px; font-weight: bold;"">{details.OverallScore ?? 0}</div>
+            <table style=""margin: 0 auto;"" cellpadding=""0"" cellspacing=""0"" border=""0"">
+                <tr>
+                    <td style=""width: 120px; height: 120px; border-radius: 50%; background: {maturityColor}; color: white; font-size: 48px; font-weight: bold; text-align: center; vertical-align: middle;"">{details.OverallScore ?? 0}</td>
+                </tr>
+            </table>
             <div style=""color: #666; margin-top: 8px;"">/ 100</div>
             <div style=""display: inline-block; background: {maturityColor}; color: white; padding: 8px 24px; border-radius: 20px; margin-top: 16px; font-weight: bold;"">{details.MaturityLevel ?? "Unknown"}</div>
         </div>
@@ -221,7 +224,6 @@ Original Message:<br>
 ====================
 
 Company: {details.Company ?? "Not provided"}
-Completed By: {details.Name}
 Email: {details.Email}
 Phone: {details.Phone ?? "Not provided"}
 

@@ -1,10 +1,13 @@
 using System;
 using System.Net.Mail;
 using System.Threading.Tasks;
+using Azure.Messaging.ServiceBus;
 using HunterWebServices.EmailService.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -12,9 +15,15 @@ namespace HunterWebServices.EmailService
 {
     public class QueueEmail
     {
+        private readonly string serviceBusConnectionString;
+
+        public QueueEmail(IConfiguration configuration)
+        {
+            this.serviceBusConnectionString = configuration[Constants.HunterWebAppsServiceBus];
+        }
+
         [FunctionName("QueueEmail")]
-        [return: ServiceBus(Constants.PendingEmailsQueue, Connection = Constants.HunterWebAppsServiceBus)]
-        public async Task<MessageDetails> Run(
+        public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = "SendEmail")] HttpRequest request,
             ILogger log)
         {
@@ -28,10 +37,16 @@ namespace HunterWebServices.EmailService
             {
                 log.LogWarning("The provided email is invalid: {0}.", details.Email);
 
-                throw new ArgumentException("The provided email is invalid", nameof(request));
+                return new BadRequestObjectResult("The provided email is invalid");
             }
 
-            return details;
+            await using var client = new ServiceBusClient(serviceBusConnectionString);
+            await using var sender = client.CreateSender(Constants.PendingEmailsQueue);
+
+            var message = new ServiceBusMessage(JsonConvert.SerializeObject(details));
+            await sender.SendMessageAsync(message);
+
+            return new OkResult();
         }
 
         private static bool IsValidEmail(string email)
