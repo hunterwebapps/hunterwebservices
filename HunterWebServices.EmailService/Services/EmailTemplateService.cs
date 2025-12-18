@@ -75,7 +75,7 @@ Original Message:<br>
     <div style=""background: #f8f9fa; padding: 12px 16px; border-bottom: 1px solid #e9ecef;"">
         <div style=""display: flex; justify-content: space-between; align-items: center;"">
             <strong style=""color: #1a3a5c;"">{category.Name}</strong>
-            <span style=""color: {catColor}; font-weight: bold;"">{category.Percentage}%</span>
+            <span style=""color: {catColor}; font-weight: bold; margin-left: 8px;"">{category.Percentage}%</span>
         </div>
         <div style=""background: #e9ecef; height: 8px; border-radius: 4px; margin-top: 8px;"">
             <div style=""background: {catColor}; height: 8px; border-radius: 4px; width: {category.Percentage}%;""></div>
